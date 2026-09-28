@@ -1,0 +1,18 @@
+name: student_achievements
+description: "Студенттердің жетістіктерін есепке алу қосымшасы."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
