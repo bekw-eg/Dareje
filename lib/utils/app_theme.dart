@@ -15,6 +15,7 @@ class AppTheme {
         borderSide: const BorderSide(color: Color(0xFFD5DEE3)),
       ),
       errorMaxLines: 3,
+      helperMaxLines: 3,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

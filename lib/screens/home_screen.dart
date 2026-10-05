@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/stat_card.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.firstName});
+
+  final String firstName;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Сәлем, студент!',
+                'Сәлем, $firstName!',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

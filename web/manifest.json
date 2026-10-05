@@ -1,11 +1,11 @@
 {
-    "name": "student_achievements",
-    "short_name": "student_achievements",
+    "name": "Dáreje",
+    "short_name": "Dáreje",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F5F7FA",
+    "theme_color": "#176B78",
+    "description": "Студент жетістіктері.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
