@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/local_auth_service.dart';
+import '../services/local_achievement_service.dart';
+import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'placeholder_screen.dart';
 
@@ -15,6 +17,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   bool _isSigningOut = false;
+  late final _achievementService = LocalAchievementService(
+    login: widget.authService.currentUser!.login,
+  );
 
   static const _titles = ['Басты бет', 'Жетістіктер', 'Рейтинг', 'Профиль'];
   Future<void> _logout() async {
@@ -36,8 +41,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomeScreen(firstName: widget.authService.currentUser!.firstName),
-      const PlaceholderScreen(title: 'Жетістіктер'),
+      HomeScreen(
+        firstName: widget.authService.currentUser!.firstName,
+        onAddAchievement: () => setState(() => _selectedIndex = 1),
+      ),
+      AchievementsScreen(service: _achievementService),
       const PlaceholderScreen(title: 'Рейтинг'),
       const PlaceholderScreen(title: 'Профиль'),
     ];

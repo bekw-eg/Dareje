@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import '../widgets/stat_card.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.firstName});
+  const HomeScreen({
+    super.key,
+    required this.firstName,
+    required this.onAddAchievement,
+  });
 
   final String firstName;
+  final VoidCallback onAddAchievement;
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +36,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Жетістік қосу келесі кезеңде қолжетімді болады.',
-                      ),
-                    ),
-                  );
-                },
+                onPressed: onAddAchievement,
                 icon: const Icon(Icons.add),
                 label: const Text('Жетістік қосу'),
                 style: FilledButton.styleFrom(
