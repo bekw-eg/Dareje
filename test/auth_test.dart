@@ -186,6 +186,17 @@ void main() {
     await tester.pumpWidget(StudentApp(authService: auth));
     await tester.pumpAndSettle();
     expect(find.text('Сәлем, Бек!'), findsOneWidget);
+    expect(find.text('Жалпы балл: 48'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+    expect(find.text('Бек Ермек'), findsOneWidget);
+    expect(find.text('bek@example.kz'), findsOneWidget);
+    expect(find.text('Көрсеткіштер'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Сәлем, Бек!'), findsOneWidget);
     await tester.tap(find.text('Шығу'));
     await tester.pumpAndSettle();
     expect(find.text('Қош келдіңіз!'), findsOneWidget);
