@@ -5,10 +5,12 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
     required this.firstName,
+    required this.totalScore,
     required this.onAddAchievement,
   });
 
   final String firstName;
+  final int totalScore;
   final VoidCallback onAddAchievement;
 
   @override
@@ -28,7 +30,10 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const StatCard(icon: Icons.stars_outlined, text: 'Жалпы балл: 0'),
+              StatCard(
+                icon: Icons.stars_outlined,
+                text: 'Жалпы балл: $totalScore',
+              ),
               const SizedBox(height: 16),
               const StatCard(
                 icon: Icons.leaderboard_outlined,

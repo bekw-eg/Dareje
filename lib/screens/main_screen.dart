@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/student_profile.dart';
 import '../services/local_auth_service.dart';
 import '../services/local_achievement_service.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'placeholder_screen.dart';
+import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key, required this.authService});
@@ -40,14 +42,16 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = StudentProfile.initial(widget.authService.currentUser!);
     final pages = [
       HomeScreen(
         firstName: widget.authService.currentUser!.firstName,
+        totalScore: profile.totalScore,
         onAddAchievement: () => setState(() => _selectedIndex = 1),
       ),
       AchievementsScreen(service: _achievementService),
       const PlaceholderScreen(title: 'Рейтинг'),
-      const PlaceholderScreen(title: 'Профиль'),
+      ProfileScreen(profile: profile, achievementService: _achievementService),
     ];
     return Scaffold(
       appBar: AppBar(
