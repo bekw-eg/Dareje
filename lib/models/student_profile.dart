@@ -7,6 +7,7 @@ class StudentProfile {
     this.university,
     this.specialty,
     this.course,
+    this.achievementCount = 0,
     required List<StudentIndicator> indicators,
   }) : indicators = List.unmodifiable(indicators);
 
@@ -15,6 +16,7 @@ class StudentProfile {
   final String? university;
   final String? specialty;
   final int? course;
+  final int achievementCount;
   final List<StudentIndicator> indicators;
 
   String get name => '${user.firstName} ${user.lastName}'.trim();
@@ -26,16 +28,40 @@ class StudentProfile {
                 indicators.length)
             .round();
 
-  // Временные значения. Позже сюда можно передать показатели из достижений.
+  // Базовые значения: каждое начисление рассчитывается заново от них.
   factory StudentProfile.initial(LocalUser user) => StudentProfile(
     user: user,
     indicators: [
-      StudentIndicator(name: 'Оқу', value: 60),
-      StudentIndicator(name: 'Бағдарламалау', value: 68),
-      StudentIndicator(name: 'Жобалар', value: 55),
-      StudentIndicator(name: 'Топтық жұмыс', value: 41),
-      StudentIndicator(name: 'Спорт', value: 35),
-      StudentIndicator(name: 'Еріктілік', value: 30),
+      StudentIndicator(
+        type: StudentIndicatorType.academic,
+        name: 'Оқу',
+        value: 60,
+      ),
+      StudentIndicator(
+        type: StudentIndicatorType.programming,
+        name: 'Бағдарламалау',
+        value: 68,
+      ),
+      StudentIndicator(
+        type: StudentIndicatorType.projects,
+        name: 'Жобалар',
+        value: 55,
+      ),
+      StudentIndicator(
+        type: StudentIndicatorType.teamwork,
+        name: 'Топтық жұмыс',
+        value: 41,
+      ),
+      StudentIndicator(
+        type: StudentIndicatorType.sport,
+        name: 'Спорт',
+        value: 35,
+      ),
+      StudentIndicator(
+        type: StudentIndicatorType.volunteering,
+        name: 'Еріктілік',
+        value: 30,
+      ),
     ],
   );
 }

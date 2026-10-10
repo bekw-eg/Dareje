@@ -6,6 +6,7 @@ import 'package:student_achievements/models/student_indicator.dart';
 import 'package:student_achievements/models/student_profile.dart';
 import 'package:student_achievements/screens/profile_screen.dart';
 import 'package:student_achievements/services/local_achievement_service.dart';
+import 'package:student_achievements/services/achievement_scoring_service.dart';
 import 'package:student_achievements/utils/app_theme.dart';
 
 import 'achievements_test.dart' show AchievementPreferences;
@@ -38,15 +39,37 @@ void main() {
       StudentProfile(
         user: user,
         indicators: [
-          StudentIndicator(name: 'A', value: 0),
-          StudentIndicator(name: 'B', value: 99),
+          StudentIndicator(
+            type: StudentIndicatorType.academic,
+            name: 'A',
+            value: 0,
+          ),
+          StudentIndicator(
+            type: StudentIndicatorType.programming,
+            name: 'B',
+            value: 99,
+          ),
         ],
       ).totalScore,
       50,
     );
-    expect(StudentIndicator(name: 'A', value: 100).value, 100);
+    expect(
+      StudentIndicator(
+        type: StudentIndicatorType.academic,
+        name: 'A',
+        value: 100,
+      ).value,
+      100,
+    );
     for (final value in [-1, 101]) {
-      expect(() => StudentIndicator(name: 'A', value: value), throwsRangeError);
+      expect(
+        () => StudentIndicator(
+          type: StudentIndicatorType.academic,
+          name: 'A',
+          value: value,
+        ),
+        throwsRangeError,
+      );
     }
   });
 
@@ -64,15 +87,17 @@ void main() {
       login: user.login,
       preferences: preferences,
     );
-    final profile = StudentProfile.initial(user);
+    final baseProfile = StudentProfile.initial(user);
 
     Future<void> openProfile() async {
+      final profile = AchievementScoringService().calculate(
+        baseProfile: baseProfile,
+        achievements: await service.load(),
+      );
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light,
-          home: Scaffold(
-            body: ProfileScreen(profile: profile, achievementService: service),
-          ),
+          home: Scaffold(body: ProfileScreen(profile: profile)),
         ),
       );
       await tester.pumpAndSettle();
@@ -92,7 +117,7 @@ void main() {
           .map((bar) => bar.value),
       [0.6, 0.68, 0.55, 0.41, 0.35, 0.3],
     );
-    for (final indicator in profile.indicators) {
+    for (final indicator in baseProfile.indicators) {
       await tester.ensureVisible(find.text(indicator.name));
       expect(find.text('${indicator.value} / 100'), findsOneWidget);
     }
@@ -121,21 +146,15 @@ void main() {
     );
     await openProfile();
     expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
-    expect(find.text('Жалпы балл: 48'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    preferences.failReads = true;
-    await openProfile();
+    expect(find.text('Жалпы балл: 51'), findsOneWidget);
     expect(
-      find.text('Жетістіктер санын жүктеу мүмкін болмады.'),
-      findsOneWidget,
+      tester
+          .widgetList<LinearProgressIndicator>(
+            find.byType(LinearProgressIndicator),
+          )
+          .map((bar) => bar.value),
+      [0.6, 0.72, 0.65, 0.44, 0.35, 0.3],
     );
-    expect(find.text('Жетістіктер саны: 0'), findsNothing);
-    preferences.failReads = false;
-    await tester.ensureVisible(find.text('Қайта көру'));
-    await tester.tap(find.text('Қайта көру'));
-    await tester.pumpAndSettle();
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
