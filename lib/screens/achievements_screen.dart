@@ -6,9 +6,10 @@ import '../utils/achievement_date.dart';
 import 'add_achievement_screen.dart';
 
 class AchievementsScreen extends StatefulWidget {
-  const AchievementsScreen({super.key, required this.service});
+  const AchievementsScreen({super.key, required this.service, this.onSaved});
 
   final LocalAchievementService service;
+  final VoidCallback? onSaved;
 
   @override
   State<AchievementsScreen> createState() => _AchievementsScreenState();
@@ -31,6 +32,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
     if (saved == true && mounted) {
       _reload();
+      widget.onSaved?.call();
     }
   }
 

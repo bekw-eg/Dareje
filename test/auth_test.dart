@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:student_achievements/main.dart';
 import 'package:student_achievements/services/local_auth_service.dart';
 import 'package:student_achievements/utils/auth_validators.dart';
@@ -38,6 +40,11 @@ class MemoryPreferences implements SharedPreferencesAsync {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late String savedAccount;
+
+  setUp(() {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
 
   setUpAll(() async {
     WidgetController.hitTestWarningShouldBeFatal = true;

@@ -1,41 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../models/student_profile.dart';
-import '../services/local_achievement_service.dart';
 import '../widgets/stat_card.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
-    super.key,
-    required this.profile,
-    required this.achievementService,
-  });
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key, required this.profile});
 
   final StudentProfile profile;
-  final LocalAchievementService achievementService;
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  late Future<int> _achievementCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCount();
-  }
-
-  void _loadCount() {
-    _achievementCount = widget.achievementService.load().then(
-      (items) => items.length,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final profile = widget.profile;
     final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -74,37 +48,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 text: 'Жалпы балл: ${profile.totalScore}',
               ),
               const SizedBox(height: 16),
-              FutureBuilder<int>(
-                future: _achievementCount,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const StatCard(
-                      icon: Icons.emoji_events_outlined,
-                      text: 'Жетістіктер саны: жүктелуде…',
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Column(
-                      children: [
-                        const Text('Жетістіктер санын жүктеу мүмкін болмады.'),
-                        TextButton(
-                          onPressed: () => setState(_loadCount),
-                          child: const Text('Қайта көру'),
-                        ),
-                      ],
-                    );
-                  }
-                  return StatCard(
-                    icon: Icons.emoji_events_outlined,
-                    text: 'Жетістіктер саны: ${snapshot.data}',
-                  );
-                },
+              StatCard(
+                icon: Icons.emoji_events_outlined,
+                text: 'Жетістіктер саны: ${profile.achievementCount}',
               ),
               const SizedBox(height: 24),
               Text('Көрсеткіштер', style: theme.textTheme.titleLarge),
               const SizedBox(height: 8),
               const Text(
-                'Бастапқы сынақ мәндері. Жетістіктерге әлі байланысты емес.',
+                'Бастапқы мәндерге сақталған жетістіктердің ұпайлары қосылады.',
               ),
               const SizedBox(height: 16),
               for (final indicator in profile.indicators)

@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import '../models/student_profile.dart';
 import '../services/local_auth_service.dart';
 import '../services/local_achievement_service.dart';
+import '../services/achievement_scoring_service.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'placeholder_screen.dart';
 import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key, required this.authService});
+  const MainScreen({
+    super.key,
+    required this.authService,
+    this.achievementService,
+  });
 
   final LocalAuthService authService;
+  final LocalAchievementService? achievementService;
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -19,11 +25,87 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   bool _isSigningOut = false;
-  late final _achievementService = LocalAchievementService(
-    login: widget.authService.currentUser!.login,
+  late final _achievementService =
+      widget.achievementService ??
+      LocalAchievementService(login: widget.authService.currentUser!.login);
+  late final _baseProfile = StudentProfile.initial(
+    widget.authService.currentUser!,
   );
+  final _scoringService = AchievementScoringService();
+  late Future<StudentProfile> _loadingProfile;
 
   static const _titles = ['Басты бет', 'Жетістіктер', 'Рейтинг', 'Профиль'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadingProfile = _loadProfile();
+  }
+
+  Future<StudentProfile> _loadProfile() async {
+    final achievements = await _achievementService.load();
+    return _scoringService.calculate(
+      baseProfile: _baseProfile,
+      achievements: achievements,
+    );
+  }
+
+  void _reloadProfile() {
+    setState(() {
+      _loadingProfile = _loadProfile();
+    });
+  }
+
+  Widget _buildBody() {
+    return FutureBuilder<StudentProfile>(
+      future: _loadingProfile,
+      builder: (context, snapshot) {
+        // Список и рейтинг доступны даже при ошибке загрузки профиля.
+        if (_selectedIndex == 1) {
+          return AchievementsScreen(
+            service: _achievementService,
+            onSaved: _reloadProfile,
+          );
+        }
+        if (_selectedIndex == 2) {
+          return const PlaceholderScreen(title: 'Рейтинг');
+        }
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Профильді жүктеу мүмкін болмады.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: _reloadProfile,
+                    child: const Text('Қайта көру'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final profile = snapshot.data!;
+        return _selectedIndex == 0
+            ? HomeScreen(
+                firstName: profile.user.firstName,
+                totalScore: profile.totalScore,
+                onAddAchievement: () => setState(() => _selectedIndex = 1),
+              )
+            : ProfileScreen(profile: profile);
+      },
+    );
+  }
+
   Future<void> _logout() async {
     if (_isSigningOut) return;
     setState(() => _isSigningOut = true);
@@ -42,17 +124,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = StudentProfile.initial(widget.authService.currentUser!);
-    final pages = [
-      HomeScreen(
-        firstName: widget.authService.currentUser!.firstName,
-        totalScore: profile.totalScore,
-        onAddAchievement: () => setState(() => _selectedIndex = 1),
-      ),
-      AchievementsScreen(service: _achievementService),
-      const PlaceholderScreen(title: 'Рейтинг'),
-      ProfileScreen(profile: profile, achievementService: _achievementService),
-    ];
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_selectedIndex]),
@@ -65,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(child: pages[_selectedIndex]),
+      body: SafeArea(child: _buildBody()),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
