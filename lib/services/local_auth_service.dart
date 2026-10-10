@@ -26,6 +26,9 @@ class LocalAuthService extends ChangeNotifier {
 
   LocalUser? get currentUser => _currentUser;
 
+  // Рейтинг может читать локальные аккаунты, но не менять их список.
+  List<LocalUser> get registeredUsers => List.unmodifiable(_users);
+
   Future<void> load() async {
     final saved = await _preferences.getString(storageKey);
     if (saved == null) return;

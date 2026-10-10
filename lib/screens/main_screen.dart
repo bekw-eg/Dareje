@@ -3,20 +3,23 @@ import '../models/student_profile.dart';
 import '../services/local_auth_service.dart';
 import '../services/local_achievement_service.dart';
 import '../services/achievement_scoring_service.dart';
+import '../services/ranking_data_source.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
-import 'placeholder_screen.dart';
 import 'profile_screen.dart';
+import 'ranking_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({
     super.key,
     required this.authService,
     this.achievementService,
+    this.rankingDataSource,
   });
 
   final LocalAuthService authService;
   final LocalAchievementService? achievementService;
+  final RankingDataSource? rankingDataSource;
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -33,6 +36,15 @@ class _MainScreenState extends State<MainScreen> {
   );
   final _scoringService = AchievementScoringService();
   late Future<StudentProfile> _loadingProfile;
+  int _dataRevision = 0;
+  late final _rankingDataSource =
+      widget.rankingDataSource ??
+      LocalRankingDataSource(
+        authService: widget.authService,
+        achievementServiceFor: (login) => login == _baseProfile.user.login
+            ? _achievementService
+            : LocalAchievementService(login: login),
+      );
 
   static const _titles = ['Басты бет', 'Жетістіктер', 'Рейтинг', 'Профиль'];
 
@@ -53,6 +65,7 @@ class _MainScreenState extends State<MainScreen> {
   void _reloadProfile() {
     setState(() {
       _loadingProfile = _loadProfile();
+      _dataRevision++;
     });
   }
 
@@ -68,7 +81,11 @@ class _MainScreenState extends State<MainScreen> {
           );
         }
         if (_selectedIndex == 2) {
-          return const PlaceholderScreen(title: 'Рейтинг');
+          return RankingScreen(
+            dataSource: _rankingDataSource,
+            currentLogin: _baseProfile.user.login,
+            dataRevision: _dataRevision,
+          );
         }
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());

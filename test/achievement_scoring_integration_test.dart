@@ -67,6 +67,12 @@ void main() {
   ) async {
     await openMain(tester);
     expect(find.text('Жалпы балл: 48'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('48 балл'), findsWidgets);
+    expect(find.text('Әзірге басқа студенттер жоқ'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Жетістік қосу'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Жетістік қосу'));
@@ -98,6 +104,17 @@ void main() {
     expect(find.text('Hackathon Winner'), findsOneWidget);
     expect((await achievements.load()).length, 1);
 
+    await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('51 балл'), findsWidgets);
+    expect(find.text('48 балл'), findsNothing);
+    await tester.tap(find.text('Көрсеткіштерді көру'));
+    await tester.pumpAndSettle();
+    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
     expect(find.text('Жалпы балл: 51'), findsOneWidget);
@@ -121,6 +138,9 @@ void main() {
     );
     await openMain(tester);
     expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('51 балл'), findsWidgets);
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
     expect(find.text('Жалпы балл: 51'), findsOneWidget);
