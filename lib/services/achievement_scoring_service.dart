@@ -28,6 +28,22 @@ class AchievementScoringService {
   StudentProfile calculate({
     required StudentProfile baseProfile,
     required List<Achievement> achievements,
+  }) => StudentProfile(
+    user: baseProfile.user,
+    university: baseProfile.university,
+    specialty: baseProfile.specialty,
+    course: baseProfile.course,
+    achievementCount: achievements.length,
+    indicators: calculateIndicators(
+      baseIndicators: baseProfile.indicators,
+      achievements: achievements,
+    ),
+  );
+
+  // Один расчёт для профиля, рейтинга и наблюдаемых изменений истории.
+  List<StudentIndicator> calculateIndicators({
+    required List<StudentIndicator> baseIndicators,
+    required List<Achievement> achievements,
   }) {
     final bonuses = <StudentIndicatorType, int>{};
     // Каждая сохранённая запись учитывается один раз за расчёт.
@@ -41,23 +57,16 @@ class AchievementScoringService {
 
     // Не изменяем базовый профиль и не сохраняем накопленные баллы.
     // Общий балл вычисляет существующий StudentProfile.totalScore.
-    return StudentProfile(
-      user: baseProfile.user,
-      university: baseProfile.university,
-      specialty: baseProfile.specialty,
-      course: baseProfile.course,
-      achievementCount: achievements.length,
-      indicators: [
-        for (final indicator in baseProfile.indicators)
-          StudentIndicator(
-            type: indicator.type,
-            name: indicator.name,
-            value: (indicator.value + (bonuses[indicator.type] ?? 0)).clamp(
-              0,
-              100,
-            ),
+    return [
+      for (final indicator in baseIndicators)
+        StudentIndicator(
+          type: indicator.type,
+          name: indicator.name,
+          value: (indicator.value + (bonuses[indicator.type] ?? 0)).clamp(
+            0,
+            100,
           ),
-      ],
-    );
+        ),
+    ];
   }
 }

@@ -131,6 +131,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Жалпы балл: 51'), findsOneWidget);
 
+    await tester.tap(find.byIcon(Icons.insights_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('51 / 100'), findsOneWidget);
+    expect(find.text('+3 балл'), findsOneWidget);
+    final history = await achievements.loadSnapshot();
+    expect(history.history.length, 1);
+    expect(
+      history.history.single.achievementId,
+      history.achievements.single.id,
+    );
+
     await tester.pumpWidget(const SizedBox.shrink());
     achievements = LocalAchievementService(
       login: user.login,
@@ -138,6 +149,10 @@ void main() {
     );
     await openMain(tester);
     expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.insights_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('51 / 100'), findsOneWidget);
+    expect((await achievements.loadSnapshot()).history.length, 1);
     await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
     await tester.pumpAndSettle();
     expect(find.text('51 балл'), findsWidgets);
