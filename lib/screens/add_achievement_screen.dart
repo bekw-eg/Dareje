@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/achievement.dart';
 import '../services/local_achievement_service.dart';
 import '../utils/achievement_date.dart';
+import '../utils/category_visuals.dart';
+import '../utils/app_spacing.dart';
+import '../widgets/app_widgets.dart';
 
 class AddAchievementScreen extends StatefulWidget {
   const AddAchievementScreen({super.key, required this.service});
@@ -14,6 +17,7 @@ class AddAchievementScreen extends StatefulWidget {
 }
 
 class _AddAchievementScreenState extends State<AddAchievementScreen> {
+  final _achievementId = Achievement.createId();
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
@@ -43,6 +47,7 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
     try {
       await widget.service.add(
         Achievement(
+          id: _achievementId,
           title: _title.text.trim(),
           description: _description.text.trim(),
           category: _category!,
@@ -77,7 +82,8 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: AppSpacing.page(context),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 600),
@@ -89,6 +95,37 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      AppReveal(
+                        child: AppSurface(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: Row(
+                            children: [
+                              Icon(
+                                CategoryVisuals.icon(_category ?? 'Other'),
+                                size: 32,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Жаңа жетістік',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text('Әр жеңісің маңызды.'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
                       TextFormField(
                         controller: _title,
                         enabled: !_saving,
@@ -96,6 +133,8 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Жетістік атауы',
+                          hintText: 'Мысалы, хакатондағы жеңіс',
+                          counterText: '',
                         ),
                         validator: (value) =>
                             value == null || value.trim().isEmpty
@@ -111,6 +150,8 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                         maxLength: 2000,
                         decoration: const InputDecoration(
                           labelText: 'Сипаттама',
+                          hintText: 'Жетістігің туралы қысқаша',
+                          counterText: '',
                         ),
                         validator: (value) =>
                             value == null || value.trim().isEmpty
@@ -126,7 +167,7 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                             .map(
                               (category) => DropdownMenuItem(
                                 value: category,
-                                child: Text(category),
+                                child: Text(CategoryVisuals.label(category)),
                               ),
                             )
                             .toList(),
@@ -146,7 +187,7 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Алынған күні',
                           hintText: '08.10.2026',
-                          helperText: 'Күн.Ай.Жыл (мысалы, 08.10.2026)',
+                          helperText: 'КК.АА.ЖЖЖЖ',
                           prefixIcon: Icon(Icons.calendar_today_outlined),
                         ),
                         validator: (value) =>
@@ -169,7 +210,11 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                       const SizedBox(height: 24),
                       FilledButton(
                         onPressed: _saving ? null : _save,
-                        child: Text(_saving ? 'Сақталуда…' : 'Сақтау'),
+                        child: AppButtonContent(
+                          busy: _saving,
+                          label: 'Сақтау',
+                          busyLabel: 'Сақталуда…',
+                        ),
                       ),
                     ],
                   ),
