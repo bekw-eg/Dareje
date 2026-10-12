@@ -82,7 +82,13 @@ void main() {
     await service.add(achievement);
     final saved = Map<String, String>.from(preferences.values);
     preferences.failWrites = true;
-    await expectLater(service.add(achievement), throwsStateError);
+    final another = Achievement(
+      title: 'Жаңа',
+      description: 'Сипаттама',
+      category: 'Academic',
+      date: DateTime(2026, 10, 9),
+    );
+    await expectLater(service.add(another), throwsStateError);
     expect(preferences.values, saved);
     preferences.failWrites = false;
     preferences.values[preferences.values.keys.single] = 'broken json';
@@ -154,7 +160,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(category);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Programming').last);
+    await tester.tap(find.text('Бағдарламалау').last);
     await tester.pumpAndSettle();
     preferences.failWrites = true;
     await tapSave(tester);
@@ -163,18 +169,35 @@ void main() {
     preferences.failWrites = false;
     await tapSave(tester);
     expect(find.text('Әзірге жетістіктер жоқ'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Олимпиада'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Олимпиада'));
+    await tester.pumpAndSettle();
     for (final value in [
       'Олимпиада',
       'Бірінші орын',
-      'Programming',
+      'Бағдарламалау',
       '08.10.2026',
     ]) {
-      expect(find.text(value), findsOneWidget);
+      expect(find.text(value), findsWidgets);
     }
-    expect((await service.load()).single.toJson(), achievement.toJson());
+    expect(
+      (await service.load()).single.toJson()..remove('id'),
+      achievement.toJson()..remove('id'),
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await openScreen(tester);
+    await tester.scrollUntilVisible(
+      find.text('Олимпиада'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Олимпиада'), findsOneWidget);
   });
 

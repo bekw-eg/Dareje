@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/local_auth_service.dart';
 import '../widgets/auth_layout.dart';
+import '../widgets/app_widgets.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AuthLayout(
       title: 'Қош келдіңіз!',
-      description: 'Жетістіктеріңізге бір қадам жақын. Аккаунтыңызға кіріңіз.',
+      description: 'Өсу жолыңды жалғастыр.',
       child: AutofillGroup(
         child: Form(
           key: _formKey,
@@ -125,7 +126,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _isSubmitting ? null : _login,
-                child: Text(_isSubmitting ? 'Кіруде…' : 'Кіру'),
+                child: AppButtonContent(
+                  busy: _isSubmitting,
+                  label: 'Кіру',
+                  busyLabel: 'Кіруде…',
+                ),
               ),
               const SizedBox(height: 16),
               Text(

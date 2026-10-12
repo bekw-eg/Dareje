@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'services/local_auth_service.dart';
 import 'utils/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 void main() => runApp(const StudentApp());
 
@@ -44,7 +45,7 @@ class _StudentAppState extends State<StudentApp> {
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: AppSkeleton(label: 'Аккаунт жүктелуде'),
             );
           }
           if (snapshot.hasError) {
@@ -61,8 +62,9 @@ class _StudentAppState extends State<StudentApp> {
                       ),
                       const SizedBox(height: 16),
                       FilledButton(
-                        onPressed: () =>
-                            setState(() => _loading = _authService.load()),
+                        onPressed: () => setState(() {
+                          _loading = _authService.load();
+                        }),
                         child: const Text('Қайта көру'),
                       ),
                     ],
@@ -73,9 +75,17 @@ class _StudentAppState extends State<StudentApp> {
           }
           return ListenableBuilder(
             listenable: _authService,
-            builder: (context, _) => _authService.currentUser == null
-                ? LoginScreen(authService: _authService)
-                : MainScreen(authService: _authService),
+            builder: (context, _) => AppStateSwitch(
+              child: _authService.currentUser == null
+                  ? LoginScreen(
+                      key: const ValueKey('login'),
+                      authService: _authService,
+                    )
+                  : MainScreen(
+                      key: ValueKey(_authService.currentUser!.login),
+                      authService: _authService,
+                    ),
+            ),
           );
         },
       ),

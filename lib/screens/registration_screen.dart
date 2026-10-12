@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/local_auth_service.dart';
 import '../utils/auth_validators.dart';
 import '../widgets/auth_layout.dart';
+import '../widgets/app_widgets.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key, required this.authService});
@@ -82,7 +83,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         showBackButton: true,
         canGoBack: !_isSubmitting,
         title: 'Аккаунт құру',
-        description: 'Өзіңіз туралы мәліметтерді енгізіп, Dáreje-ге қосылыңыз.',
+        description: 'Жеке өсу жолыңды баста.',
         child: AutofillGroup(
           child: Form(
             key: _formKey,
@@ -227,7 +228,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 const SizedBox(height: 24),
                 FilledButton(
                   onPressed: _isSubmitting ? null : _register,
-                  child: Text(_isSubmitting ? 'Сақталуда…' : 'Тіркелу'),
+                  child: AppButtonContent(
+                    busy: _isSubmitting,
+                    label: 'Тіркелу',
+                    busyLabel: 'Сақталуда…',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
