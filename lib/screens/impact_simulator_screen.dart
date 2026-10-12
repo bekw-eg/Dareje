@@ -6,6 +6,11 @@ import '../models/simulation_result.dart';
 import '../services/impact_simulation_data_source.dart';
 import '../services/impact_simulation_service.dart';
 import '../widgets/analytics_charts.dart';
+import '../widgets/app_widgets.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_motion.dart';
+import '../utils/app_spacing.dart';
+import '../utils/category_visuals.dart';
 
 class ImpactSimulatorScreen extends StatefulWidget {
   const ImpactSimulatorScreen({
@@ -87,18 +92,7 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (_busy) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(
-              semanticsLabel: 'Ағымдағы деректер жүктелуде',
-            ),
-            SizedBox(height: 16),
-            Text('Ағымдағы деректер жүктелуде…'),
-          ],
-        ),
-      );
+      return const AppSkeleton(label: 'Ағымдағы деректер жүктелуде');
     }
     if (_error || _data!.profile.indicators.isEmpty) {
       return Center(
@@ -131,28 +125,19 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
     final result = _result;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
+        constraints: const BoxConstraints(maxWidth: AppSpacing.contentWidth),
         child: RefreshIndicator(
           onRefresh: () => _load(simulate: result?.scenario),
           child: ListView(
             key: ValueKey(result == null ? 'scenario-list' : 'result-list'),
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
+            padding: AppSpacing.page(context),
             children: [
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primaryContainer,
-                      theme.colorScheme.tertiaryContainer.withValues(
-                        alpha: 0.6,
-                      ),
-                    ],
-                  ),
+                  gradient: AppColors.heroGradient,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,32 +145,57 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
                     Icon(
                       Icons.auto_awesome_rounded,
                       size: 32,
-                      color: theme.colorScheme.primary,
+                      color: const Color(0xFFDFD3F5),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      result == null
-                          ? 'Келесі қадамыңыздың ықпалы'
-                          : result.scenario.title,
+                      result == null ? 'Келесі қадамың' : result.scenario.title,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       result == null
-                          ? 'Жетістікті таңдап, дағдыларыңыз бен рейтингіңіз қалай өзгеруі мүмкін екенін көріңіз.'
+                          ? 'Бір қадам. Қанша өсім?'
                           : 'Бір ықтимал жетістік · ${ImpactScenario.categoryLabel(result.scenario.category)}',
+                      style: const TextStyle(color: Color(0xFFDFD3F5)),
                     ),
                     const SizedBox(height: 16),
+                    if (result == null) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          AppBadge(
+                            'Қазір: ${_data!.profile.totalScore} / 100',
+                            color: const Color(0xFFE6DAFF),
+                          ),
+                          AppBadge(
+                            '${_data!.profile.achievementCount} жетістік',
+                            color: const Color(0xFFE6DAFF),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.visibility_outlined, size: 20),
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 20,
+                          color: Color(0xFFDFD3F5),
+                        ),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Бұл — тек болжам. Нақты балл, жетістіктер мен прогресс тарихы өзгермейді.',
+                            'Тек болжам · нақты деректер өзгермейді',
+                            style: TextStyle(
+                              color: Color(0xFFDFD3F5),
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -203,28 +213,9 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
   }
 
   List<Widget> _selection() {
-    final profile = _data!.profile;
     return [
       _Panel(
-        title: 'Қазіргі жағдайыңыз',
-        child: Wrap(
-          spacing: 24,
-          runSpacing: 12,
-          children: [
-            Text(
-              '${profile.totalScore} / 100 балл',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            Text(
-              '${profile.achievementCount} жетістік',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 16),
-      _Panel(
-        title: '1. Санатты таңдаңыз',
+        title: 'Санатты таңда',
         child: Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -244,7 +235,7 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
       ),
       const SizedBox(height: 16),
       _Panel(
-        title: '2. Қандай жетістікке ұмтыласыз?',
+        title: 'Келесі жетістік',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -277,8 +268,11 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
               },
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Бір санаттағы сценарийлерге бірдей балл ережесі қолданылады. Жетістік түрі қосымша бонус бермейді.',
+            const AppDetails(
+              title: 'Балл ережесі',
+              child: Text(
+                'Бір санаттағы сценарийлерге бірдей балл ережесі қолданылады. Жетістік түрі қосымша бонус бермейді.',
+              ),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
@@ -437,30 +431,33 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
       const SizedBox(height: 16),
       _Panel(
         title: 'Балл неліктен өзгерді?',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${result.scenario.title} · ${ImpactScenario.categoryLabel(result.scenario.category)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            for (final impact in result.impacts)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${impact.before.name}: +${impact.delta}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(impact.explanation),
-                  ],
-                ),
+        child: AppDetails(
+          title: 'Есептеуді ашу',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '${result.scenario.title} · ${ImpactScenario.categoryLabel(result.scenario.category)}',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-          ],
+              const SizedBox(height: 16),
+              for (final impact in result.impacts)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${impact.before.name}: +${impact.delta}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(impact.explanation),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
       const SizedBox(height: 20),
@@ -482,9 +479,7 @@ class _ImpactSimulatorScreenState extends State<ImpactSimulatorScreen> {
 }
 
 Duration _duration(BuildContext context) =>
-    MediaQuery.disableAnimationsOf(context)
-    ? Duration.zero
-    : const Duration(milliseconds: 700);
+    AppMotion.duration(context, AppMotion.entrance);
 
 class _ScenarioCard extends StatelessWidget {
   const _ScenarioCard({
@@ -495,64 +490,61 @@ class _ScenarioCard extends StatelessWidget {
   final ImpactScenario scenario;
   final bool selected;
   final VoidCallback onTap;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Semantics(
       selected: selected,
       button: true,
-      child: Material(
+      child: AppPressable(
+        key: ValueKey('scenario-${scenario.id}'),
+        onTap: onTap,
         color: selected ? colors.primaryContainer : colors.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: selected ? colors.primary : colors.outlineVariant,
-            width: selected ? 2 : 1,
+        radius: 20,
+        child: AnimatedContainer(
+          duration: AppMotion.duration(context),
+          curve: AppMotion.curve,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
           ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: ValueKey('scenario-${scenario.id}'),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedSwitcher(
+                duration: AppMotion.duration(context, AppMotion.quick),
+                child: Icon(
                   selected
                       ? Icons.check_circle_rounded
-                      : _categoryIcon(scenario.category),
+                      : CategoryVisuals.icon(scenario.category),
+                  key: ValueKey(selected),
                   color: colors.primary,
                   size: 28,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  scenario.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(scenario.description),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                scenario.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                scenario.description,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-IconData _categoryIcon(String category) => switch (category) {
-  'Academic' => Icons.school_outlined,
-  'Programming' => Icons.code_rounded,
-  'Projects' => Icons.rocket_launch_outlined,
-  'Sport' => Icons.sports_score_rounded,
-  'Volunteering' => Icons.volunteer_activism_outlined,
-  _ => Icons.groups_outlined,
-};
 
 class _ScoreTile extends StatelessWidget {
   const _ScoreTile({
@@ -683,15 +675,8 @@ class _Panel extends StatelessWidget {
   final String title;
   final Widget child;
   @override
-  Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
-      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
+  Widget build(BuildContext context) => AppReveal(
+    child: AppSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

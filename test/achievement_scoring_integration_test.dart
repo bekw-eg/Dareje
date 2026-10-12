@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:student_achievements/models/achievement.dart';
 import 'package:student_achievements/models/local_user.dart';
 import 'package:student_achievements/screens/main_screen.dart';
@@ -66,15 +67,17 @@ void main() {
     tester,
   ) async {
     await openMain(tester);
-    expect(find.text('Жалпы балл: 48'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 48),
+      findsOneWidget,
+    );
     await tester.tap(find.byIcon(Icons.leaderboard_outlined).last);
     await tester.pumpAndSettle();
     expect(find.text('48 балл'), findsWidgets);
     expect(find.text('Әзірге басқа студенттер жоқ'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Жетістік қосу'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Жетістік қосу'));
     await tester.tap(find.text('Жетістік қосу'));
     await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
@@ -92,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(category);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Programming').last);
+    await tester.tap(find.text('Бағдарламалау').last);
     await tester.pumpAndSettle();
 
     preferences.failWrites = true;
@@ -110,15 +113,21 @@ void main() {
     expect(find.text('48 балл'), findsNothing);
     await tester.tap(find.text('Көрсеткіштерді көру'));
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
+    expect(find.text('1 жетістік'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
+    expect(find.text('1 жетістік'), findsOneWidget);
     expect(
       tester
           .widgetList<LinearProgressIndicator>(
@@ -129,7 +138,10 @@ void main() {
     );
     await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byIcon(Icons.insights_outlined).last);
     await tester.pumpAndSettle();
@@ -148,7 +160,10 @@ void main() {
       preferences: preferences,
     );
     await openMain(tester);
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
     await tester.tap(find.byIcon(Icons.insights_outlined).last);
     await tester.pumpAndSettle();
     expect(find.text('51 / 100'), findsOneWidget);
@@ -158,8 +173,11 @@ void main() {
     expect(find.text('51 балл'), findsWidgets);
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
+    expect(find.text('1 жетістік'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -188,10 +206,13 @@ void main() {
       ),
     );
     await openMain(tester);
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
+    expect(find.text('1 жетістік'), findsOneWidget);
     expect(
       tester
           .widgetList<LinearProgressIndicator>(
@@ -217,18 +238,27 @@ void main() {
     preferences.failReads = true;
     await openMain(tester);
     expect(find.text('Профильді жүктеу мүмкін болмады.'), findsOneWidget);
-    expect(find.text('Жалпы балл: 48'), findsNothing);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 48),
+      findsNothing,
+    );
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
     expect(find.text('Профильді жүктеу мүмкін болмады.'), findsOneWidget);
     preferences.failReads = false;
     await tester.tap(find.text('Қайта көру'));
     await tester.pumpAndSettle();
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(find.text('1 жетістік'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
     await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

@@ -160,7 +160,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(category);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Programming').last);
+    await tester.tap(find.text('Бағдарламалау').last);
     await tester.pumpAndSettle();
     preferences.failWrites = true;
     await tapSave(tester);
@@ -169,13 +169,21 @@ void main() {
     preferences.failWrites = false;
     await tapSave(tester);
     expect(find.text('Әзірге жетістіктер жоқ'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Олимпиада'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Олимпиада'));
+    await tester.pumpAndSettle();
     for (final value in [
       'Олимпиада',
       'Бірінші орын',
-      'Programming',
+      'Бағдарламалау',
       '08.10.2026',
     ]) {
-      expect(find.text(value), findsOneWidget);
+      expect(find.text(value), findsWidgets);
     }
     expect(
       (await service.load()).single.toJson()..remove('id'),
@@ -184,6 +192,12 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await openScreen(tester);
+    await tester.scrollUntilVisible(
+      find.text('Олимпиада'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Олимпиада'), findsOneWidget);
   });
 

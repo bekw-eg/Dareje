@@ -10,6 +10,8 @@ abstract final class AppColors {
   static const muted = Color(0xFF706A80);
   static const line = Color(0xFFE8E4EF);
   static const teal = Color(0xFF167D83);
+  static const mint = Color(0xFFE3F3F0);
+  static const deepTeal = Color(0xFF125C58);
   static const blue = Color(0xFF4169BE);
   static const amber = Color(0xFFA56617);
   static const rose = Color(0xFFAE4872);

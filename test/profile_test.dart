@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:student_achievements/models/achievement.dart';
 import 'package:student_achievements/models/local_user.dart';
 import 'package:student_achievements/models/student_indicator.dart';
@@ -106,9 +107,15 @@ void main() {
     await openProfile();
     expect(find.text('Әли Ермек'), findsOneWidget);
     expect(find.text('ali@example.kz'), findsOneWidget);
+    await tester.ensureVisible(find.text('Оқу туралы мәліметтер'));
+    await tester.tap(find.text('Оқу туралы мәліметтер'));
+    await tester.pumpAndSettle();
     expect(find.text('Көрсетілмеген'), findsNWidgets(3));
-    expect(find.text('Жетістіктер саны: 0'), findsOneWidget);
-    expect(find.text('Жалпы балл: 48'), findsOneWidget);
+    expect(find.text('0 жетістік'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 48),
+      findsOneWidget,
+    );
     expect(
       tester
           .widgetList<LinearProgressIndicator>(
@@ -145,8 +152,11 @@ void main() {
       ),
     );
     await openProfile();
-    expect(find.text('Жетістіктер саны: 1'), findsOneWidget);
-    expect(find.text('Жалпы балл: 51'), findsOneWidget);
+    expect(find.text('1 жетістік'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 51),
+      findsOneWidget,
+    );
     expect(
       tester
           .widgetList<LinearProgressIndicator>(

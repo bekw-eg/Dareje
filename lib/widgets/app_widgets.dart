@@ -13,7 +13,13 @@ class AppPage extends StatelessWidget {
   Widget build(BuildContext context) => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: AppSpacing.contentWidth),
-      child: ListView(padding: AppSpacing.page(context), children: children),
+      child: SingleChildScrollView(
+        padding: AppSpacing.page(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
+      ),
     ),
   );
 }
@@ -29,18 +35,17 @@ class AppSurface extends StatelessWidget {
   final Color? color;
   final EdgeInsetsGeometry padding;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: color ?? Theme.of(context).colorScheme.surface,
+  Widget build(BuildContext context) => Material(
+    color: color ?? Theme.of(context).colorScheme.surface,
+    shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppSpacing.radius),
-      border: Border.all(
+      side: BorderSide(
         color: Theme.of(
           context,
         ).colorScheme.outlineVariant.withValues(alpha: 0.6),
       ),
     ),
-    child: child,
+    child: Padding(padding: padding, child: child),
   );
 }
 
@@ -387,7 +392,7 @@ class SkillProgress extends StatelessWidget {
               backgroundColor: color.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(8),
               semanticsLabel: indicator.name,
-              semanticsValue: '${indicator.value} / 100',
+              semanticsValue: '${indicator.value}%',
             ),
           ),
           if (subtitle != null) ...[

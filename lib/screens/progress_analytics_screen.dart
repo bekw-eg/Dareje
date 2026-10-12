@@ -6,6 +6,9 @@ import '../services/analytics_data_source.dart';
 import '../services/progress_analytics_service.dart';
 import '../utils/achievement_date.dart';
 import '../widgets/analytics_charts.dart';
+import '../widgets/app_widgets.dart';
+import '../utils/app_spacing.dart';
+import '../utils/category_visuals.dart';
 
 class ProgressAnalyticsScreen extends StatefulWidget {
   const ProgressAnalyticsScreen({
@@ -71,11 +74,7 @@ class _ProgressAnalyticsScreenState extends State<ProgressAnalyticsScreen> {
       future: _loading,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(
-              semanticsLabel: 'Талдау жүктелуде',
-            ),
-          );
+          return const AppSkeleton(label: 'Талдау жүктелуде');
         }
         if (snapshot.hasError) {
           return Center(
@@ -109,12 +108,14 @@ class _ProgressAnalyticsScreenState extends State<ProgressAnalyticsScreen> {
         );
         return Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.contentWidth,
+            ),
             child: RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: AppSpacing.page(context),
                 children: [
                   Row(
                     children: [
@@ -133,9 +134,7 @@ class _ProgressAnalyticsScreenState extends State<ProgressAnalyticsScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Жетістіктеріңіз, дағдыларыңыз және тіркелген өзгерістер.',
-                  ),
+                  const Text('Өсуіңді бір көріністе көр.'),
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 8,
@@ -154,8 +153,7 @@ class _ProgressAnalyticsScreenState extends State<ProgressAnalyticsScreen> {
                   const SizedBox(height: 16),
                   _AnalyticsCard(
                     title: 'Дағдылар көрінісі',
-                    subtitle:
-                        'Санатты таңдап, нақты көрсеткішті көріңіз. Шкала: 0–100.',
+                    subtitle: 'Дағдыны таңда · 0–100',
                     child: SkillRadarChart(
                       indicators: summary.data.profile.indicators,
                     ),
@@ -181,8 +179,11 @@ class _ProgressAnalyticsScreenState extends State<ProgressAnalyticsScreen> {
                         else
                           ProgressLineChart(events: summary.events),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Тек тарих енгізілгеннен кейін сақталған өзгерістер қамтылады. Бұрынғы өзгерістер қалпына келтірілмейді.',
+                        const AppDetails(
+                          title: 'Тарих туралы',
+                          child: Text(
+                            'Графикте нақты сақталған уақыт көрсетіледі. Тек тарих енгізілгеннен кейін сақталған өзгерістер қамтылады. Бұрынғы өзгерістер қалпына келтірілмейді.',
+                          ),
                         ),
                       ],
                     ),
@@ -233,109 +234,103 @@ String _names(List<StudentIndicator> indicators) =>
 class _Overview extends StatelessWidget {
   const _Overview({required this.summary});
   final ProgressAnalyticsSummary summary;
-
   @override
   Widget build(BuildContext context) {
     final data = summary.data;
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.primaryContainer,
-            colors.secondaryContainer.withValues(alpha: 0.65),
+    final theme = Theme.of(context);
+    return AppReveal(
+      child: AppSurface(
+        color: theme.colorScheme.primaryContainer,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Жеке прогресс', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 20),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width =
+                    constraints.maxWidth < 260 ||
+                        MediaQuery.textScalerOf(context).scale(16) > 22
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - 16) / 2;
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 20,
+                  children: [
+                    SizedBox(
+                      width: width,
+                      child: _Metric(
+                        'Жалпы балл',
+                        '${data.profile.totalScore} / 100',
+                        key: const ValueKey('analytics-score'),
+                        prominent: true,
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _Metric(
+                        'Тіркелген өзгеріс',
+                        '${_change(summary.recordedScoreChange)} балл',
+                        key: const ValueKey('analytics-change'),
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _Metric(
+                        'Жетістіктер',
+                        '${data.profile.achievementCount}',
+                        key: const ValueKey('analytics-count'),
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _Metric(
+                        'Жергілікті орын',
+                        data.rankingPosition == null
+                            ? '—'
+                            : '#${data.rankingPosition}',
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            if (data.rankingUnavailable)
+              const Text('Рейтинг деректері оқылмады. Жаңартып көріңіз.')
+            else
+              const AppBadge(
+                'Осы құрылғыдағы аккаунттар',
+                icon: Icons.devices_outlined,
+              ),
           ],
         ),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Жеке прогресс', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final largeText = MediaQuery.textScalerOf(context).scale(16) > 22;
-              final columns = constraints.maxWidth < 450 || largeText ? 1 : 2;
-              final width =
-                  (constraints.maxWidth - 16 * (columns - 1)) / columns;
-              return Wrap(
-                spacing: 16,
-                runSpacing: 20,
-                children: [
-                  SizedBox(
-                    width: width,
-                    child: _Metric(
-                      'Жалпы балл',
-                      '${data.profile.totalScore} / 100',
-                      key: const ValueKey('analytics-score'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: _Metric(
-                      'Жетістіктер саны',
-                      '${data.profile.achievementCount}',
-                      key: const ValueKey('analytics-count'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: _Metric(
-                      'Жергілікті рейтинг',
-                      data.rankingPosition == null
-                          ? '—'
-                          : '#${data.rankingPosition}',
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: _Metric(
-                      'Кезеңдегі тіркелген өзгеріс',
-                      '${_change(summary.recordedScoreChange)} балл',
-                      key: const ValueKey('analytics-change'),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Ең жоғары дағды: ${_names(summary.strongest)}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            data.rankingUnavailable
-                ? 'Рейтинг деректері оқылмады. Жаңартып көріңіз.'
-                : 'Рейтинг тек осы құрылғыдағы / браузердегі нақты аккаунттарды қамтиды.',
-          ),
-        ],
       ),
     );
   }
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric(this.label, this.value, {super.key});
+  const _Metric(this.label, this.value, {super.key, this.prominent = false});
   final String label;
   final String value;
-
+  final bool prominent;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      const SizedBox(height: 4),
+      Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: 6),
       Text(
         value,
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        style: prominent
+            ? Theme.of(context).textTheme.headlineMedium
+            : Theme.of(context).textTheme.headlineSmall,
       ),
     ],
   );
@@ -344,76 +339,53 @@ class _Metric extends StatelessWidget {
 class _CategoryBreakdown extends StatelessWidget {
   const _CategoryBreakdown({required this.summary});
   final ProgressAnalyticsSummary summary;
-
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Ең жоғары дағды: ${_names(summary.strongest)}',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Даму мүмкіндігі: ${_names(summary.growthOpportunity)}',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'Даму мүмкіндігі — ағымдағы мәні ең төмен дағды. Бұл өсу қарқынын білдірмейді.',
-        ),
-        const SizedBox(height: 20),
-        for (final category in summary.categories)
-          Padding(
-            key: ValueKey('category-${category.indicator.type.name}'),
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        category.indicator.name,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text('${category.indicator.value} / 100'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: category.indicator.value / 100),
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : const Duration(milliseconds: 350),
-                  builder: (context, value, _) => LinearProgressIndicator(
-                    value: value,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(8),
-                    semanticsLabel: category.indicator.name,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Тікелей жетістіктер: ${category.achievementCount} · Тіркелген өзгеріс: ${_change(category.recordedChange)}',
-                ),
-              ],
-            ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          AppBadge(
+            'Күшті: ${_names(summary.strongest)}',
+            icon: Icons.north_east_rounded,
           ),
-        Text(
-          'Other / Басқа: ${summary.data.achievements.where((a) => a.category == 'Other').length} жетістік. Жеке көрсеткіші жоқ; топтық жұмысқа әсер етеді.',
+          AppBadge(
+            'Даму: ${_names(summary.growthOpportunity)}',
+            color: Theme.of(context).colorScheme.secondary,
+          ),
+        ],
+      ),
+      const SizedBox(height: 24),
+      for (final category in summary.categories)
+        SkillProgress(
+          key: ValueKey('category-${category.indicator.type.name}'),
+          indicator: category.indicator,
+          subtitle:
+              '${category.achievementCount} тікелей жетістік · ${_change(category.recordedChange)} тіркелген өсім',
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Топтық жұмысқа басқа санаттардағы жетістіктер әсер етеді; бұл жеке жетістік санаты емес.',
+      AppDetails(
+        title: 'Санаттар қалай әсер етеді?',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Даму мүмкіндігі — ағымдағы мәні ең төмен дағды. Бұл өсу қарқынын білдірмейді.',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Басқа: ${summary.data.achievements.where((a) => a.category == 'Other').length} жетістік. Жеке көрсеткіші жоқ; топтық жұмысқа әсер етеді.',
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Топтық жұмысқа басқа санаттардағы жетістіктер әсер етеді; бұл жеке жетістік санаты емес.',
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 class _TimelineRow extends StatelessWidget {
@@ -437,7 +409,7 @@ class _TimelineRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.emoji_events_outlined,
+            CategoryVisuals.icon(entry.achievement.category),
             color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: 12),
@@ -451,7 +423,7 @@ class _TimelineRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${entry.achievement.category} · ${formatAchievementDate(entry.achievement.date)}',
+                  '${CategoryVisuals.label(entry.achievement.category)} · ${formatAchievementDate(entry.achievement.date)}',
                 ),
                 const SizedBox(height: 6),
                 if (event == null)
@@ -460,13 +432,22 @@ class _TimelineRow extends StatelessWidget {
                   Text(
                     'Жалпы балл: ${_change(event.totalScoreChange)} · ${event.previousTotalScore} → ${event.newTotalScore}',
                   ),
-                  Text(
-                    influence.isEmpty
-                        ? 'Көрсеткіштер өзгермеді.'
-                        : influence.join(' · '),
-                  ),
-                  Text(
-                    'Сақталған уақыт: ${formatHistoryTimestamp(event.timestamp)}',
+                  AppDetails(
+                    title: 'Ықпал туралы',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          influence.isEmpty
+                              ? 'Көрсеткіштер өзгермеді.'
+                              : influence.join(' · '),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Сақталған уақыт: ${formatHistoryTimestamp(event.timestamp)}',
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ],
@@ -487,24 +468,17 @@ class _AnalyticsCard extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget child;
-
   @override
-  Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
-      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
+  Widget build(BuildContext context) => AppReveal(
+    child: AppSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleLarge),
-          if (subtitle != null) ...[const SizedBox(height: 6), Text(subtitle!)],
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           child,
+          if (subtitle != null)
+            AppDetails(title: 'Толығырақ', child: Text(subtitle!)),
         ],
       ),
     ),

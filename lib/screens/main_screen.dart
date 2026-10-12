@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/student_profile.dart';
+import '../models/achievement.dart';
+import '../services/student_ranking_service.dart';
+import '../widgets/app_widgets.dart';
+import '../widgets/dareje_navigation.dart';
+import 'add_achievement_screen.dart';
 import '../services/local_auth_service.dart';
 import '../services/local_achievement_service.dart';
 import '../services/achievement_scoring_service.dart';
@@ -40,6 +45,8 @@ class _MainScreenState extends State<MainScreen> {
   );
   final _scoringService = AchievementScoringService();
   late Future<StudentProfile> _loadingProfile;
+  late Future<int?> _loadingPosition;
+  List<Achievement> _achievements = [];
   int _dataRevision = 0;
   late final _rankingDataSource =
       widget.rankingDataSource ??
@@ -80,26 +87,58 @@ class _MainScreenState extends State<MainScreen> {
     'Жетістіктер',
     'Рейтинг',
     'Профиль',
-    'Прогресс талдауы',
+    'Талдау',
   ];
 
   @override
   void initState() {
     super.initState();
     _loadingProfile = _loadProfile();
+    _loadingPosition = _loadPosition();
   }
 
   Future<StudentProfile> _loadProfile() async {
     final achievements = await _achievementService.load();
+    _achievements = achievements;
     return _scoringService.calculate(
       baseProfile: _baseProfile,
       achievements: achievements,
     );
   }
 
+  Future<int?> _loadPosition() async {
+    try {
+      final profiles = await _rankingDataSource.loadProfiles();
+      if (profiles.map((p) => p.user.login).toSet().length != profiles.length)
+        return null;
+      final entries = StudentRankingService().rank(profiles);
+      for (final entry in entries) {
+        if (entry.profile.user.login == _baseProfile.user.login)
+          return entry.position;
+      }
+    } catch (_) {
+      // Сбой рейтинга не скрывает достоверный личный профиль.
+    }
+    return null;
+  }
+
+  Future<void> _addAchievement() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddAchievementScreen(service: _achievementService),
+      ),
+    );
+    if (saved == true && mounted) _reloadProfile();
+  }
+
+  void _selectTab(int index) {
+    if (_selectedIndex != index) setState(() => _selectedIndex = index);
+  }
+
   void _reloadProfile() {
     setState(() {
       _loadingProfile = _loadProfile();
+      _loadingPosition = _loadPosition();
       _dataRevision++;
     });
   }
@@ -129,7 +168,7 @@ class _MainScreenState extends State<MainScreen> {
           );
         }
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppSkeleton(label: 'Профиль жүктелуде');
         }
         if (snapshot.hasError) {
           return Center(
@@ -154,13 +193,28 @@ class _MainScreenState extends State<MainScreen> {
         }
         final profile = snapshot.data!;
         return _selectedIndex == 0
-            ? HomeScreen(
-                firstName: profile.user.firstName,
-                totalScore: profile.totalScore,
-                onAddAchievement: () => setState(() => _selectedIndex = 1),
-                onOpenSimulator: _openSimulator,
+            ? FutureBuilder<int?>(
+                future: _loadingPosition,
+                builder: (context, position) => HomeScreen(
+                  profile: profile,
+                  achievements: _achievements,
+                  rankingPosition:
+                      position.connectionState == ConnectionState.done
+                      ? position.data
+                      : null,
+                  onAddAchievement: _addAchievement,
+                  onOpenAchievements: () => _selectTab(1),
+                  onOpenRanking: () => _selectTab(2),
+                  onOpenProfile: () => _selectTab(3),
+                  onOpenAnalytics: () => _selectTab(4),
+                  onOpenSimulator: _openSimulator,
+                ),
               )
-            : ProfileScreen(profile: profile);
+            : ProfileScreen(
+                profile: profile,
+                onOpenAchievements: () => _selectTab(1),
+                onOpenAnalytics: () => _selectTab(4),
+              );
       },
     );
   }
@@ -185,7 +239,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
+        title: Text(_selectedIndex == 0 ? 'Dáreje' : _titles[_selectedIndex]),
         actions: [
           TextButton.icon(
             onPressed: _isSigningOut ? null : _logout,
@@ -195,37 +249,17 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(child: _buildBody()),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Басты бет',
+      body: SafeArea(
+        child: AppStateSwitch(
+          child: KeyedSubtree(
+            key: ValueKey(_selectedIndex),
+            child: _buildBody(),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events_outlined),
-            activeIcon: Icon(Icons.emoji_events),
-            label: 'Жетістіктер',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.leaderboard_outlined),
-            activeIcon: Icon(Icons.leaderboard),
-            label: 'Рейтинг',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Профиль',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.insights_outlined),
-            activeIcon: Icon(Icons.insights),
-            label: 'Талдау',
-          ),
-        ],
+        ),
+      ),
+      bottomNavigationBar: DarejeNavigation(
+        index: _selectedIndex,
+        onChanged: _selectTab,
       ),
     );
   }

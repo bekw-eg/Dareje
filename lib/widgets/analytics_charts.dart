@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/progress_history_entry.dart';
 import '../models/student_indicator.dart';
 import '../utils/achievement_date.dart';
+import '../utils/app_motion.dart';
 
 class SkillRadarChart extends StatefulWidget {
   const SkillRadarChart({
@@ -75,13 +76,22 @@ class _SkillRadarChartState extends State<SkillRadarChart> {
                       label: predicted == null
                           ? 'Дағдылар диаграммасы. ${selected.name}: ${selected.value} / 100. Төмендегі санаттарды таңдаңыз.'
                           : '${selected.name}: қазір ${selected.value}, болжам ${predicted.value}. Төмендегі дағдыларды таңдаңыз.',
-                      child: CustomPaint(
-                        painter: _RadarPainter(
-                          widget.indicators,
-                          _selected,
-                          colors,
-                          comparison,
-                          widget.comparisonProgress,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1),
+                        duration: AppMotion.duration(
+                          context,
+                          AppMotion.entrance,
+                        ),
+                        curve: AppMotion.curve,
+                        builder: (context, progress, _) => CustomPaint(
+                          painter: _RadarPainter(
+                            widget.indicators,
+                            _selected,
+                            colors,
+                            comparison,
+                            widget.comparisonProgress,
+                            progress,
+                          ),
                         ),
                       ),
                     ),
@@ -130,12 +140,14 @@ class _RadarPainter extends CustomPainter {
     this.colors,
     this.comparison,
     this.progress,
+    this.entranceProgress,
   );
   final List<StudentIndicator> indicators;
   final int selected;
   final ColorScheme colors;
   final List<StudentIndicator>? comparison;
   final double progress;
+  final double entranceProgress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -169,7 +181,9 @@ class _RadarPainter extends CustomPainter {
     for (var index = 0; index < indicators.length; index++) {
       canvas.drawLine(center, point(index, 1), grid);
     }
-    final data = polygon((index) => indicators[index].value / 100);
+    final data = polygon(
+      (index) => indicators[index].value / 100 * entranceProgress,
+    );
     canvas.drawPath(
       data,
       Paint()..color = colors.primary.withValues(alpha: 0.18),
@@ -212,7 +226,7 @@ class _RadarPainter extends CustomPainter {
     );
     for (var index = 0; index < indicators.length; index++) {
       canvas.drawCircle(
-        point(index, indicators[index].value / 100),
+        point(index, indicators[index].value / 100 * entranceProgress),
         index == selected ? 6 : 3,
         Paint()..color = colors.primary,
       );
@@ -297,9 +311,7 @@ class _ProgressLineChartState extends State<ProgressLineChart> {
                 child: TweenAnimationBuilder<double>(
                   key: ValueKey(widget.events.map((e) => e.id).join('|')),
                   tween: Tween(begin: 0, end: 1),
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : const Duration(milliseconds: 350),
+                  duration: AppMotion.duration(context, AppMotion.entrance),
                   builder: (context, opacity, _) => CustomPaint(
                     painter: _LinePainter(
                       widget.events,
@@ -348,7 +360,7 @@ class _ProgressLineChartState extends State<ProgressLineChart> {
                   : () => setState(() => _selected++),
               icon: const Icon(Icons.chevron_right),
             ),
-            const Text('Күн мен баллды көру үшін нүктені таңдаңыз.'),
+            const Text('Нүктені таңда · күн мен балл'),
           ],
         ),
       ],

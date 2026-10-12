@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -193,7 +194,10 @@ void main() {
     await tester.pumpWidget(StudentApp(authService: auth));
     await tester.pumpAndSettle();
     expect(find.text('Сәлем, Бек!'), findsOneWidget);
-    expect(find.text('Жалпы балл: 48'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 48),
+      findsOneWidget,
+    );
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
     expect(find.text('Бек Ермек'), findsOneWidget);

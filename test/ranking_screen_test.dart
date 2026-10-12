@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:student_achievements/models/student_profile.dart';
 import 'package:student_achievements/screens/ranking_screen.dart';
 import 'package:student_achievements/services/ranking_data_source.dart';
@@ -49,7 +50,7 @@ void main() {
   ) async {
     source.pending = Completer<List<StudentProfile>>();
     await openScreen(tester);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(AppSkeleton), findsOneWidget);
     source.pending!.complete([]);
     source.pending = null;
     await tester.pumpAndSettle();
@@ -104,7 +105,10 @@ void main() {
     await tester.tap(find.text('Көрсеткіштерді көру'));
     await tester.pumpAndSettle();
     expect(find.text('Әли Ермек'), findsOneWidget);
-    expect(find.text('Жалпы балл: 90'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 90),
+      findsOneWidget,
+    );
     expect(find.text('90 / 100'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
@@ -113,7 +117,10 @@ void main() {
     await tester.ensureVisible(otherRow);
     await tester.tap(otherRow);
     await tester.pumpAndSettle();
-    expect(find.text('Жалпы балл: 80'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 80),
+      findsOneWidget,
+    );
     expect(find.text('c@example.kz'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

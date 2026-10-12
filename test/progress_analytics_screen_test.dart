@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:student_achievements/models/progress_analytics.dart';
 import 'package:student_achievements/models/progress_history_entry.dart';
 import 'package:student_achievements/models/student_indicator.dart';
@@ -89,7 +90,7 @@ void main() {
   ) async {
     source.pending = Completer<ProgressAnalyticsData>();
     await open(tester);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(AppSkeleton), findsOneWidget);
     source.pending!.completeError(StateError('Read failed'));
     source.pending = null;
     await tester.pumpAndSettle();

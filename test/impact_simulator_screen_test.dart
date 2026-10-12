@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:student_achievements/widgets/app_widgets.dart';
 import 'package:student_achievements/models/achievement.dart';
 import 'package:student_achievements/models/simulation_result.dart';
 import 'package:student_achievements/models/student_indicator.dart';
@@ -89,7 +90,7 @@ void main() {
     (tester) async {
       source.pending = Completer<ImpactSimulationData>();
       await open(tester);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(AppSkeleton), findsOneWidget);
       source.pending!.completeError(StateError('Read failed'));
       source.pending = null;
       await tester.pumpAndSettle();
@@ -170,6 +171,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.widget<Text>(metric).data, '78 / 100');
       await reveal(tester, find.text('Балл неліктен өзгерді?'));
+      await tester.tap(find.text('Есептеуді ашу'));
+      await tester.pumpAndSettle();
       expect(find.text('Топтық жұмыс: +0'), findsOneWidget);
       await reveal(tester, find.byKey(const ValueKey('try-another-scenario')));
       await tester.tap(find.byKey(const ValueKey('try-another-scenario')));
@@ -204,7 +207,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           find
-              .byType(InkWell)
+              .byType(AppPressable)
               .evaluate()
               .where((e) => e.widget.key.toString().contains('scenario-'))
               .length,
@@ -317,7 +320,10 @@ void main() {
       await simulate(tester);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
-      expect(find.text('Жалпы балл: 48'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is AppScoreRing && w.score == 48),
+        findsOneWidget,
+      );
       expect(preferences.values, saved);
       expect((await achievements.loadSnapshot()).history, isEmpty);
       await achievements.add(
