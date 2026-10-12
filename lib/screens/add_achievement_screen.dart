@@ -14,6 +14,7 @@ class AddAchievementScreen extends StatefulWidget {
 }
 
 class _AddAchievementScreenState extends State<AddAchievementScreen> {
+  final _achievementId = Achievement.createId();
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
@@ -43,6 +44,7 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
     try {
       await widget.service.add(
         Achievement(
+          id: _achievementId,
           title: _title.text.trim(),
           description: _description.text.trim(),
           category: _category!,

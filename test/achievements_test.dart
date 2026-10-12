@@ -82,7 +82,13 @@ void main() {
     await service.add(achievement);
     final saved = Map<String, String>.from(preferences.values);
     preferences.failWrites = true;
-    await expectLater(service.add(achievement), throwsStateError);
+    final another = Achievement(
+      title: 'Жаңа',
+      description: 'Сипаттама',
+      category: 'Academic',
+      date: DateTime(2026, 10, 9),
+    );
+    await expectLater(service.add(another), throwsStateError);
     expect(preferences.values, saved);
     preferences.failWrites = false;
     preferences.values[preferences.values.keys.single] = 'broken json';
@@ -171,7 +177,10 @@ void main() {
     ]) {
       expect(find.text(value), findsOneWidget);
     }
-    expect((await service.load()).single.toJson(), achievement.toJson());
+    expect(
+      (await service.load()).single.toJson()..remove('id'),
+      achievement.toJson()..remove('id'),
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await openScreen(tester);

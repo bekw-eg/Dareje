@@ -4,10 +4,12 @@ import '../services/local_auth_service.dart';
 import '../services/local_achievement_service.dart';
 import '../services/achievement_scoring_service.dart';
 import '../services/ranking_data_source.dart';
+import '../services/analytics_data_source.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'ranking_screen.dart';
+import 'progress_analytics_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({
@@ -46,7 +48,19 @@ class _MainScreenState extends State<MainScreen> {
             : LocalAchievementService(login: login),
       );
 
-  static const _titles = ['Басты бет', 'Жетістіктер', 'Рейтинг', 'Профиль'];
+  late final _analyticsDataSource = LocalAnalyticsDataSource(
+    baseProfile: _baseProfile,
+    achievementService: _achievementService,
+    rankingDataSource: _rankingDataSource,
+  );
+
+  static const _titles = [
+    'Басты бет',
+    'Жетістіктер',
+    'Рейтинг',
+    'Профиль',
+    'Прогресс талдауы',
+  ];
 
   @override
   void initState() {
@@ -84,6 +98,12 @@ class _MainScreenState extends State<MainScreen> {
           return RankingScreen(
             dataSource: _rankingDataSource,
             currentLogin: _baseProfile.user.login,
+            dataRevision: _dataRevision,
+          );
+        }
+        if (_selectedIndex == 4) {
+          return ProgressAnalyticsScreen(
+            dataSource: _analyticsDataSource,
             dataRevision: _dataRevision,
           );
         }
@@ -177,6 +197,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
             label: 'Профиль',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights_outlined),
+            activeIcon: Icon(Icons.insights),
+            label: 'Талдау',
           ),
         ],
       ),
