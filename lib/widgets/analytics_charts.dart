@@ -7,8 +7,15 @@ import '../models/student_indicator.dart';
 import '../utils/achievement_date.dart';
 
 class SkillRadarChart extends StatefulWidget {
-  const SkillRadarChart({super.key, required this.indicators});
+  const SkillRadarChart({
+    super.key,
+    required this.indicators,
+    this.comparisonIndicators,
+    this.comparisonProgress = 1,
+  });
   final List<StudentIndicator> indicators;
+  final List<StudentIndicator>? comparisonIndicators;
+  final double comparisonProgress;
 
   @override
   State<SkillRadarChart> createState() => _SkillRadarChartState();
@@ -23,11 +30,18 @@ class _SkillRadarChartState extends State<SkillRadarChart> {
     final colors = Theme.of(context).colorScheme;
     final selected =
         widget.indicators[_selected.clamp(0, widget.indicators.length - 1)];
+    final comparison = widget.comparisonIndicators;
+    final predicted = comparison == null
+        ? null
+        : comparison.firstWhere((item) => item.type == selected.type);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '${selected.name} · ${selected.value} / 100',
+          predicted == null
+              ? '${selected.name} · ${selected.value} / 100'
+              : '${selected.name} · ${selected.value} → ${predicted.value} (+${predicted.value - selected.value})',
+          key: const ValueKey('radar-tooltip'),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium,
         ),
@@ -58,13 +72,16 @@ class _SkillRadarChartState extends State<SkillRadarChart> {
                       );
                     },
                     child: Semantics(
-                      label:
-                          'Дағдылар диаграммасы. ${selected.name}: ${selected.value} / 100. Төмендегі санаттарды таңдаңыз.',
+                      label: predicted == null
+                          ? 'Дағдылар диаграммасы. ${selected.name}: ${selected.value} / 100. Төмендегі санаттарды таңдаңыз.'
+                          : '${selected.name}: қазір ${selected.value}, болжам ${predicted.value}. Төмендегі дағдыларды таңдаңыз.',
                       child: CustomPaint(
                         painter: _RadarPainter(
                           widget.indicators,
                           _selected,
                           colors,
+                          comparison,
+                          widget.comparisonProgress,
                         ),
                       ),
                     ),
@@ -74,6 +91,18 @@ class _SkillRadarChartState extends State<SkillRadarChart> {
             ),
           ),
         ),
+        if (comparison != null)
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 20,
+            runSpacing: 8,
+            children: [
+              Text('● Қазір', style: TextStyle(color: colors.primary)),
+              Text('◆ Болжам', style: TextStyle(color: colors.tertiary)),
+              const Text('Шкала: 0–100'),
+            ],
+          ),
+        const SizedBox(height: 8),
         Wrap(
           alignment: WrapAlignment.center,
           spacing: 8,
@@ -95,10 +124,18 @@ class _SkillRadarChartState extends State<SkillRadarChart> {
 }
 
 class _RadarPainter extends CustomPainter {
-  _RadarPainter(this.indicators, this.selected, this.colors);
+  _RadarPainter(
+    this.indicators,
+    this.selected,
+    this.colors,
+    this.comparison,
+    this.progress,
+  );
   final List<StudentIndicator> indicators;
   final int selected;
   final ColorScheme colors;
+  final List<StudentIndicator>? comparison;
+  final double progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -137,6 +174,35 @@ class _RadarPainter extends CustomPainter {
       data,
       Paint()..color = colors.primary.withValues(alpha: 0.18),
     );
+    if (comparison != null) {
+      final values = {for (final item in comparison!) item.type: item.value};
+      double ratio(int index) {
+        final before = indicators[index].value;
+        final after = values[indicators[index].type] ?? before;
+        return (before + (after - before) * progress) / 100;
+      }
+
+      final predicted = polygon(ratio);
+      canvas.drawPath(
+        predicted,
+        Paint()..color = colors.tertiary.withValues(alpha: 0.16),
+      );
+      canvas.drawPath(
+        predicted,
+        Paint()
+          ..color = colors.tertiary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5,
+      );
+      for (var index = 0; index < indicators.length; index++) {
+        final p = point(index, ratio(index));
+        final marker = index == selected ? 6.0 : 3.5;
+        canvas.drawRect(
+          Rect.fromCenter(center: p, width: marker * 2, height: marker * 2),
+          Paint()..color = colors.tertiary,
+        );
+      }
+    }
     canvas.drawPath(
       data,
       Paint()

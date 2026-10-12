@@ -25,6 +25,15 @@ class AchievementScoringService {
     'Other': {StudentIndicatorType.teamwork: 2},
   };
 
+  // Симулятор читает те же правила, не создавая настоящее достижение.
+  Map<StudentIndicatorType, int> bonusesForCategory(String category) =>
+      Map.unmodifiable(_categoryBonuses[category] ?? {});
+
+  List<StudentIndicator> calculateCategoryIndicators({
+    required List<StudentIndicator> baseIndicators,
+    required String category,
+  }) => _applyBonuses(baseIndicators, bonusesForCategory(category));
+
   StudentProfile calculate({
     required StudentProfile baseProfile,
     required List<Achievement> achievements,
@@ -48,13 +57,19 @@ class AchievementScoringService {
     final bonuses = <StudentIndicatorType, int>{};
     // Каждая сохранённая запись учитывается один раз за расчёт.
     for (final achievement in achievements) {
-      final influence = _categoryBonuses[achievement.category];
-      if (influence == null) continue;
+      final influence = bonusesForCategory(achievement.category);
       for (final bonus in influence.entries) {
         bonuses[bonus.key] = (bonuses[bonus.key] ?? 0) + bonus.value;
       }
     }
 
+    return _applyBonuses(baseIndicators, bonuses);
+  }
+
+  List<StudentIndicator> _applyBonuses(
+    List<StudentIndicator> baseIndicators,
+    Map<StudentIndicatorType, int> bonuses,
+  ) {
     // Не изменяем базовый профиль и не сохраняем накопленные баллы.
     // Общий балл вычисляет существующий StudentProfile.totalScore.
     return [

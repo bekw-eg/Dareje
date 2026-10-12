@@ -5,11 +5,13 @@ import '../services/local_achievement_service.dart';
 import '../services/achievement_scoring_service.dart';
 import '../services/ranking_data_source.dart';
 import '../services/analytics_data_source.dart';
+import '../services/impact_simulation_data_source.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'ranking_screen.dart';
 import 'progress_analytics_screen.dart';
+import 'impact_simulator_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({
@@ -53,6 +55,25 @@ class _MainScreenState extends State<MainScreen> {
     achievementService: _achievementService,
     rankingDataSource: _rankingDataSource,
   );
+
+  late final _simulationDataSource = LocalImpactSimulationDataSource(
+    baseProfile: _baseProfile,
+    achievementService: _achievementService,
+    rankingDataSource: _rankingDataSource,
+  );
+
+  void _openSimulator() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text('Ықпал симуляторы')),
+          body: SafeArea(
+            child: ImpactSimulatorScreen(dataSource: _simulationDataSource),
+          ),
+        ),
+      ),
+    );
+  }
 
   static const _titles = [
     'Басты бет',
@@ -137,6 +158,7 @@ class _MainScreenState extends State<MainScreen> {
                 firstName: profile.user.firstName,
                 totalScore: profile.totalScore,
                 onAddAchievement: () => setState(() => _selectedIndex = 1),
+                onOpenSimulator: _openSimulator,
               )
             : ProfileScreen(profile: profile);
       },
