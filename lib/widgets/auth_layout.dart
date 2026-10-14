@@ -22,7 +22,7 @@ class AuthLayout extends StatelessWidget {
     appBar: showBackButton
         ? AppBar(
             leading: IconButton(
-              tooltip: 'Кіруге оралу',
+              tooltip: 'Артқа',
               onPressed: canGoBack
                   ? () => Navigator.of(context).maybePop()
                   : null,
@@ -60,9 +60,11 @@ class AuthLayout extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Text(
-                            'Dáreje',
-                            style: Theme.of(context).textTheme.headlineSmall,
+                          Flexible(
+                            child: Text(
+                              'Dáreje',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
                           ),
                         ],
                       ),

@@ -4,6 +4,8 @@ import '../services/local_auth_service.dart';
 import '../utils/auth_validators.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/recovery_code_dialog.dart';
+import 'forgot_password_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key, required this.authService});
@@ -25,6 +27,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _hidePassword = true;
   bool _hideConfirmation = true;
   bool _isSubmitting = false;
+  bool _isShowingRecoveryCode = false;
   bool _hasSubmitted = false;
   String? _error;
 
@@ -53,13 +56,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _error = null;
     });
     try {
-      await widget.authService.register(
+      final recoveryCode = await widget.authService.register(
         login: _login.text,
         firstName: _firstName.text,
         lastName: _lastName.text,
         email: _email.text,
         password: _password.text,
       );
+      if (!mounted) return;
+      setState(() => _isShowingRecoveryCode = true);
+      await showRecoveryCodeDialog(context, code: recoveryCode);
       if (mounted) {
         setState(() => _isSubmitting = false);
         Navigator.of(context).pop();
@@ -71,7 +77,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         setState(() => _error = 'Аккаунт сақталмады. Қайта көріңіз');
       }
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _isShowingRecoveryCode = false;
+        });
+      }
     }
   }
 
@@ -229,12 +240,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 FilledButton(
                   onPressed: _isSubmitting ? null : _register,
                   child: AppButtonContent(
-                    busy: _isSubmitting,
+                    busy: _isSubmitting && !_isShowingRecoveryCode,
                     label: 'Тіркелу',
                     busyLabel: 'Сақталуда…',
                   ),
                 ),
                 const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          FocusScope.of(context).unfocus();
+                          Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => ForgotPasswordScreen(
+                                authService: widget.authService,
+                                initialIdentifier: _email.text.trim().isEmpty
+                                    ? _login.text
+                                    : _email.text,
+                              ),
+                            ),
+                          );
+                        },
+                  child: const Text('Құпиясөзді ұмыттыңыз ба?'),
+                ),
                 Wrap(
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,

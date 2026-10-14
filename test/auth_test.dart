@@ -276,4 +276,95 @@ void main() {
       auth.dispose();
     },
   );
+
+  testWidgets(
+    'Real registration and password recovery return to the correct app screens',
+    (tester) async {
+      final auth = LocalAuthService(preferences: MemoryPreferences());
+      Future<void> waitForScreen(Finder finder) async {
+        // Хеш считается вне кадров Flutter; обновляем и реальное время, и кадры.
+        for (
+          var attempt = 0;
+          attempt < 300 && finder.evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)),
+          );
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        expect(finder, findsOneWidget);
+        await tester.pumpAndSettle();
+      }
+
+      await tester.pumpWidget(StudentApp(authService: auth));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Тіркелу'));
+      await tester.tap(find.text('Тіркелу'));
+      await tester.pumpAndSettle();
+      final registrationFields = find.byType(TextFormField);
+      for (var index = 0; index < 6; index++) {
+        await tester.ensureVisible(registrationFields.at(index));
+        await tester.enterText(
+          registrationFields.at(index),
+          [
+            'recovery-student',
+            'Али',
+            'Ермек',
+            'recovery@example.kz',
+            'Original12',
+            'Original12',
+          ][index],
+        );
+        await tester.pumpAndSettle();
+      }
+      final registerButton = find.widgetWithText(FilledButton, 'Тіркелу');
+      await tester.ensureVisible(registerButton);
+      await tester.pumpAndSettle();
+      await tester.tap(registerButton);
+      await waitForScreen(find.byType(AlertDialog));
+      final code = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .data!;
+      expect(auth.currentUser?.login, 'recovery-student');
+      await tester.tap(find.text('Кодты сақтадым'));
+      await waitForScreen(find.text('Сәлем, Али!'));
+      await tester.tap(find.text('Шығу'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Құпиясөзді ұмыттыңыз ба?'));
+      await tester.tap(find.text('Құпиясөзді ұмыттыңыз ба?'));
+      await tester.pumpAndSettle();
+      final recoveryFields = find.byType(TextFormField);
+      for (var index = 0; index < 4; index++) {
+        await tester.ensureVisible(recoveryFields.at(index));
+        await tester.enterText(
+          recoveryFields.at(index),
+          ['recovery@example.kz', code, 'Updated12', 'Updated12'][index],
+        );
+        await tester.pumpAndSettle();
+      }
+      final resetButton = find.widgetWithText(
+        FilledButton,
+        'Құпия сөзді жаңарту',
+      );
+      await tester.ensureVisible(resetButton);
+      await tester.pumpAndSettle();
+      await tester.tap(resetButton);
+      await waitForScreen(find.byType(AlertDialog));
+      final nextCode = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .data;
+      expect(nextCode, isNot(code));
+      expect(auth.currentUser, isNull);
+      await tester.tap(find.text('Кодты сақтадым'));
+      await tester.pumpAndSettle();
+      expect(find.text('Қош келдіңіз!'), findsOneWidget);
+      await tester.runAsync(() => auth.login('recovery-student', 'Updated12'));
+      await waitForScreen(find.text('Сәлем, Али!'));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      auth.dispose();
+    },
+    timeout: const Timeout(Duration(seconds: 90)),
+  );
 }

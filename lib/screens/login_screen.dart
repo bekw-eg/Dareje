@@ -4,6 +4,7 @@ import '../services/local_auth_service.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/app_widgets.dart';
 import 'registration_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.authService});
@@ -124,6 +125,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
               const SizedBox(height: 24),
+              TextButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        FocusScope.of(context).unfocus();
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => ForgotPasswordScreen(
+                              authService: widget.authService,
+                              initialIdentifier: _identifier.text,
+                            ),
+                          ),
+                        );
+                      },
+                child: const Text('Құпиясөзді ұмыттыңыз ба?'),
+              ),
+              const SizedBox(height: 8),
               FilledButton(
                 onPressed: _isSubmitting ? null : _login,
                 child: AppButtonContent(

@@ -6,6 +6,7 @@ class LocalUser {
     required this.email,
     required this.passwordHash,
     required this.salt,
+    this.recoveryCodeHash,
   });
 
   final String login;
@@ -14,6 +15,7 @@ class LocalUser {
   final String email;
   final String passwordHash;
   final String salt;
+  final String? recoveryCodeHash;
 
   factory LocalUser.fromJson(Map<String, dynamic> json) => LocalUser(
     login: json['login'] as String,
@@ -22,6 +24,7 @@ class LocalUser {
     email: json['email'] as String,
     passwordHash: json['passwordHash'] as String,
     salt: json['salt'] as String,
+    recoveryCodeHash: json['recoveryCodeHash'] as String?,
   );
 
   Map<String, String> toJson() => {
@@ -31,5 +34,6 @@ class LocalUser {
     'email': email,
     'passwordHash': passwordHash,
     'salt': salt,
+    if (recoveryCodeHash != null) 'recoveryCodeHash': recoveryCodeHash!,
   };
 }
