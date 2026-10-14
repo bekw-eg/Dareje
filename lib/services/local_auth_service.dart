@@ -23,6 +23,7 @@ class LocalAuthService extends ChangeNotifier {
   final SharedPreferencesAsync _preferences;
   List<LocalUser> _users = [];
   LocalUser? _currentUser;
+  bool _isResettingPassword = false;
 
   LocalUser? get currentUser => _currentUser;
 
@@ -45,7 +46,7 @@ class LocalAuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> register({
+  Future<String> register({
     required String login,
     required String firstName,
     required String lastName,
@@ -69,6 +70,7 @@ class LocalAuthService extends ChangeNotifier {
     }
     final random = Random.secure();
     final salt = List<int>.generate(16, (_) => random.nextInt(256));
+    final recoveryCode = _generateRecoveryCode();
     final user = LocalUser(
       login: normalizedLogin,
       firstName: firstName.trim(),
@@ -76,6 +78,7 @@ class LocalAuthService extends ChangeNotifier {
       email: normalizedEmail,
       passwordHash: await _hashPassword(password, salt),
       salt: base64Encode(salt),
+      recoveryCodeHash: await _hashRecoveryCode(recoveryCode),
     );
     final users = [..._users, user];
     // Аккаунт и сессию сохраняем вместе; интерфейс обновляем после записи.
@@ -83,6 +86,8 @@ class LocalAuthService extends ChangeNotifier {
     _users = users;
     _currentUser = user;
     notifyListeners();
+    // Открытый резервный код возвращаем только для показа после регистрации.
+    return recoveryCode;
   }
 
   Future<void> login(String identifier, String password) async {
@@ -109,6 +114,79 @@ class LocalAuthService extends ChangeNotifier {
     await _save(_users, null);
     _currentUser = null;
     notifyListeners();
+  }
+
+  Future<String> resetPassword({
+    required String identifier,
+    required String recoveryCode,
+    required String newPassword,
+  }) async {
+    if (_isResettingPassword) {
+      throw const AuthException('Құпия сөз жаңартылуда. Күте тұрыңыз');
+    }
+    final error = AuthValidators.password(newPassword);
+    if (error != null) throw AuthException(error);
+    _isResettingPassword = true;
+    try {
+      final normalized = identifier.trim().toLowerCase();
+      final codeHash = await _hashRecoveryCode(recoveryCode);
+      final index = _users.indexWhere(
+        (user) => user.login == normalized || user.email == normalized,
+      );
+      if (index < 0 ||
+          _users[index].recoveryCodeHash == null ||
+          _users[index].recoveryCodeHash != codeHash) {
+        throw const AuthException(
+          'Логин, пошта немесе қалпына келтіру коды қате',
+        );
+      }
+      final account = _users[index];
+      final random = Random.secure();
+      final salt = List<int>.generate(16, (_) => random.nextInt(256));
+      final nextCode = _generateRecoveryCode();
+      final updated = LocalUser(
+        login: account.login,
+        firstName: account.firstName,
+        lastName: account.lastName,
+        email: account.email,
+        passwordHash: await _hashPassword(newPassword, salt),
+        salt: base64Encode(salt),
+        recoveryCodeHash: await _hashRecoveryCode(nextCode),
+      );
+      final users = [..._users];
+      users[index] = updated;
+      final activeLogin = _currentUser?.login == account.login
+          ? null
+          : _currentUser?.login;
+      // Пароль, новый одноразовый код и завершение сессии сохраняем вместе.
+      // При ошибке записи прежний пароль и код остаются действительными.
+      await _save(users, activeLogin);
+      _users = users;
+      if (activeLogin == null) _currentUser = null;
+      notifyListeners();
+      return nextCode;
+    } finally {
+      _isResettingPassword = false;
+    }
+  }
+
+  static String _generateRecoveryCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final random = Random.secure();
+    // 24 случайных символа дают 120 бит; дефисы нужны только для чтения.
+    return List.generate(
+      6,
+      (_) => List.generate(
+        4,
+        (_) => alphabet[random.nextInt(alphabet.length)],
+      ).join(),
+    ).join('-');
+  }
+
+  static Future<String> _hashRecoveryCode(String code) async {
+    final normalized = code.toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
+    final hash = await Sha256().hash(utf8.encode(normalized));
+    return base64Encode(hash.bytes);
   }
 
   Future<void> _save(List<LocalUser> users, String? activeLogin) =>
