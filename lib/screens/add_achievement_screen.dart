@@ -8,16 +8,21 @@ import '../utils/app_spacing.dart';
 import '../widgets/app_widgets.dart';
 
 class AddAchievementScreen extends StatefulWidget {
-  const AddAchievementScreen({super.key, required this.service});
+  const AddAchievementScreen({
+    super.key,
+    required this.service,
+    this.achievement,
+  });
 
   final LocalAchievementService service;
+  final Achievement? achievement;
 
   @override
   State<AddAchievementScreen> createState() => _AddAchievementScreenState();
 }
 
 class _AddAchievementScreenState extends State<AddAchievementScreen> {
-  final _achievementId = Achievement.createId();
+  late final _achievementId = widget.achievement?.id ?? Achievement.createId();
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
@@ -26,6 +31,20 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
   String? _error;
   bool _saving = false;
   bool _submitted = false;
+
+  bool get _isEditing => widget.achievement != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.achievement;
+    if (item != null) {
+      _title.text = item.title;
+      _description.text = item.description;
+      _date.text = formatAchievementDate(item.date);
+      _category = item.category;
+    }
+  }
 
   @override
   void dispose() {
@@ -45,18 +64,28 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
       _error = null;
     });
     try {
-      await widget.service.add(
-        Achievement(
-          id: _achievementId,
-          title: _title.text.trim(),
-          description: _description.text.trim(),
-          category: _category!,
-          date: parseAchievementDate(_date.text)!,
-        ),
+      final achievement = Achievement(
+        id: _achievementId,
+        title: _title.text.trim(),
+        description: _description.text.trim(),
+        category: _category!,
+        date: parseAchievementDate(_date.text)!,
       );
+      if (_isEditing) {
+        await widget.service.update(widget.achievement!, achievement);
+      } else {
+        await widget.service.add(achievement);
+      }
       if (mounted) {
         setState(() => _saving = false);
         Navigator.of(context).pop(true);
+      }
+    } on AchievementException catch (error) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = error.message;
+        });
       }
     } catch (_) {
       if (mounted) {
@@ -74,7 +103,7 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
       canPop: !_saving,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Жетістік қосу'),
+          title: Text(_isEditing ? 'Жетістікті өңдеу' : 'Жетістік қосу'),
           leading: BackButton(
             onPressed: _saving ? null : () => Navigator.of(context).pop(),
           ),
@@ -111,13 +140,19 @@ class _AddAchievementScreenState extends State<AddAchievementScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Жаңа жетістік',
+                                      _isEditing
+                                          ? 'Жетістікті жаңарту'
+                                          : 'Жаңа жетістік',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.titleLarge,
                                     ),
                                     const SizedBox(height: 4),
-                                    const Text('Әр жеңісің маңызды.'),
+                                    Text(
+                                      _isEditing
+                                          ? 'Өзгерістерден кейін балл қайта есептеледі.'
+                                          : 'Әр жеңісің маңызды.',
+                                    ),
                                   ],
                                 ),
                               ),

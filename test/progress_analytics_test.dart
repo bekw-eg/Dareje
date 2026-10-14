@@ -49,7 +49,7 @@ void main() {
       final before = Map<String, String>.from(preferences.values);
       var snapshot = await service.loadSnapshot();
       expect(snapshot.history, isEmpty);
-      expect(snapshot.achievements.single.id, isNull);
+      expect(snapshot.achievements.single.id, startsWith('legacy-'));
       expect(preferences.values, before);
       final added = newAchievement('Programming');
       await service.add(added);

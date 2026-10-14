@@ -279,7 +279,7 @@ class _ProgressLineChartState extends State<ProgressLineChart> {
         Semantics(
           liveRegion: true,
           child: Text(
-            '${formatHistoryTimestamp(event.timestamp)}\n${event.previousTotalScore} → ${event.newTotalScore} балл',
+            '${event.operation.label}\n${formatHistoryTimestamp(event.timestamp)}\n${event.previousTotalScore} → ${event.newTotalScore} балл',
             key: const ValueKey('history-tooltip'),
             style: Theme.of(context).textTheme.titleMedium,
           ),

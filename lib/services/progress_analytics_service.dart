@@ -27,7 +27,12 @@ class ProgressAnalyticsService {
       if (ids.add(event.id) && !event.timestamp.isAfter(end))
         history.add(event);
     }
-    history.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    // События с одинаковым временем сохраняют порядок записи (add → edit → delete).
+    final order = {for (var i = 0; i < history.length; i++) history[i].id: i};
+    history.sort((a, b) {
+      final byTime = a.timestamp.compareTo(b.timestamp);
+      return byTime != 0 ? byTime : order[a.id]!.compareTo(order[b.id]!);
+    });
     final events = history
         .where((event) => start == null || !event.timestamp.isBefore(start))
         .toList();

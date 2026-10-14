@@ -19,6 +19,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   late Future<List<Achievement>> _loading;
   String? _category;
   String? _newId;
+  bool _isActing = false;
   @override
   void initState() {
     super.initState();
@@ -26,11 +27,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   Future<void> _add() async {
+    if (_isActing) return;
+    setState(() => _isActing = true);
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => AddAchievementScreen(service: widget.service),
       ),
     );
+    if (!mounted) return;
+    setState(() => _isActing = false);
     if (saved == true && mounted) {
       setState(() {
         _category = null;
@@ -43,10 +48,130 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     }
   }
 
+  Future<void> _edit(Achievement achievement) async {
+    if (_isActing) return;
+    setState(() => _isActing = true);
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddAchievementScreen(
+          service: widget.service,
+          achievement: achievement,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isActing = false);
+    if (saved == true) {
+      if (_newId == achievement.id) _newId = null;
+      _changed('Жетістік өңделді');
+    }
+  }
+
+  Future<void> _delete(Achievement achievement) async {
+    if (_isActing) return;
+    setState(() => _isActing = true);
+    var deleting = false;
+    String? error;
+    final deleted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => PopScope(
+          canPop: !deleting,
+          child: AlertDialog(
+            scrollable: true,
+            title: const Text('Жетістікті өшіру керек пе?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '«${achievement.title}» тізімнен өшіріледі. '
+                  'Балл мен рейтинг қайта есептеледі. '
+                  'Бұл әрекетті қайтару мүмкін емес.',
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 16),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: deleting
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Болдырмау'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                onPressed: deleting
+                    ? null
+                    : () async {
+                        if (deleting) return;
+                        setDialogState(() {
+                          deleting = true;
+                          error = null;
+                        });
+                        try {
+                          await widget.service.delete(achievement);
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop(true);
+                          }
+                        } catch (failure) {
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              deleting = false;
+                              error = failure is AchievementException
+                                  ? failure.message
+                                  : 'Жетістік өшірілмеді. Қайта көріңіз';
+                            });
+                          }
+                        }
+                      },
+                child: AppButtonContent(
+                  busy: deleting,
+                  label: 'Өшіру',
+                  busyLabel: 'Өшірілуде…',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isActing = false);
+    if (deleted == true) {
+      if (_newId == achievement.id) _newId = null;
+      _changed('Жетістік өшірілді');
+    }
+  }
+
+  void _changed(String message) {
+    _reload();
+    widget.onSaved?.call();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _reload() => setState(() {
     _loading = widget.service.load();
   });
   Future<void> _refresh() async {
+    if (_isActing) return;
     _reload();
     try {
       await _loading;
@@ -97,6 +222,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         visible[index - 1].id ?? 'legacy-${index - 1}',
                       ),
                       achievement: visible[index - 1],
+                      actionsEnabled: !_isActing,
+                      onEdit: () => _edit(visible[index - 1]),
+                      onDelete: () => _delete(visible[index - 1]),
                       highlight:
                           visible[index - 1].id != null &&
                           visible[index - 1].id == _newId,
@@ -146,7 +274,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       const SizedBox(height: 20),
                     ],
                     FilledButton.icon(
-                      onPressed: _add,
+                      onPressed: _isActing ? null : _add,
                       icon: const Icon(Icons.add_rounded),
                       label: const Text('Жетістік қосу'),
                     ),

@@ -10,6 +10,20 @@ class ProgressHistoryService {
     required List<Achievement> before,
     required Achievement achievement,
     required DateTime timestamp,
+  }) => recordChange(
+    before: before,
+    after: [...before, achievement],
+    achievementId: achievement.id!,
+    operation: AchievementChange.addition,
+    timestamp: timestamp,
+  );
+
+  ProgressHistoryEntry recordChange({
+    required List<Achievement> before,
+    required List<Achievement> after,
+    required String achievementId,
+    required AchievementChange operation,
+    required DateTime timestamp,
   }) {
     final base = StudentProfile.initialIndicators();
     final previous = _scoring.calculateIndicators(
@@ -18,11 +32,14 @@ class ProgressHistoryService {
     );
     final next = _scoring.calculateIndicators(
       baseIndicators: base,
-      achievements: [...before, achievement],
+      achievements: after,
     );
     return ProgressHistoryEntry(
-      id: 'achievement:${achievement.id}',
-      achievementId: achievement.id,
+      id: operation == AchievementChange.addition
+          ? 'achievement:$achievementId'
+          : '${operation.name}:${Achievement.createId()}',
+      achievementId: achievementId,
+      operation: operation,
       timestamp: timestamp.toUtc(),
       previousTotalScore: StudentProfile.scoreFor(previous),
       newTotalScore: StudentProfile.scoreFor(next),

@@ -429,6 +429,7 @@ class _TimelineRow extends StatelessWidget {
                 if (event == null)
                   const Text('Нақты ықпал тарихта сақталмаған.')
                 else ...[
+                  Text('Соңғы өзгеріс: ${event.operation.label}'),
                   Text(
                     'Жалпы балл: ${_change(event.totalScoreChange)} · ${event.previousTotalScore} → ${event.newTotalScore}',
                   ),
@@ -444,7 +445,7 @@ class _TimelineRow extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Сақталған уақыт: ${formatHistoryTimestamp(event.timestamp)}',
+                          'Өзгеріс уақыты: ${formatHistoryTimestamp(event.timestamp)}',
                         ),
                       ],
                     ),

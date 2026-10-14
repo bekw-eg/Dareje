@@ -1,5 +1,14 @@
 import 'student_indicator.dart';
 
+enum AchievementChange {
+  addition('Жетістік қосылды'),
+  update('Жетістік өңделді'),
+  deletion('Жетістік өшірілді');
+
+  const AchievementChange(this.label);
+  final String label;
+}
+
 class ProgressHistoryEntry {
   ProgressHistoryEntry({
     required this.id,
@@ -8,6 +17,7 @@ class ProgressHistoryEntry {
     required this.newTotalScore,
     required Map<StudentIndicatorType, int> indicatorChanges,
     this.achievementId,
+    this.operation = AchievementChange.addition,
   }) : indicatorChanges = Map.unmodifiable(indicatorChanges);
 
   final String id;
@@ -16,6 +26,7 @@ class ProgressHistoryEntry {
   final int newTotalScore;
   final Map<StudentIndicatorType, int> indicatorChanges;
   final String? achievementId;
+  final AchievementChange operation;
 
   int get totalScoreChange => newTotalScore - previousTotalScore;
 
@@ -26,6 +37,9 @@ class ProgressHistoryEntry {
         previousTotalScore: json['previousTotalScore'] as int,
         newTotalScore: json['newTotalScore'] as int,
         achievementId: json['achievementId'] as String?,
+        operation: json['operation'] == null
+            ? AchievementChange.addition
+            : AchievementChange.values.byName(json['operation'] as String),
         indicatorChanges: {
           for (final item
               in (json['indicatorChanges'] as Map<String, dynamic>).entries)
@@ -42,5 +56,6 @@ class ProgressHistoryEntry {
       for (final item in indicatorChanges.entries) item.key.name: item.value,
     },
     if (achievementId != null) 'achievementId': achievementId,
+    'operation': operation.name,
   };
 }

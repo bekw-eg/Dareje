@@ -10,9 +10,15 @@ class AchievementTile extends StatefulWidget {
     super.key,
     required this.achievement,
     this.highlight = false,
+    this.onEdit,
+    this.onDelete,
+    this.actionsEnabled = true,
   });
   final Achievement achievement;
   final bool highlight;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool actionsEnabled;
   @override
   State<AchievementTile> createState() => _AchievementTileState();
 }
@@ -84,6 +90,28 @@ class _AchievementTileState extends State<AchievementTile> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    if (widget.onEdit != null || widget.onDelete != null)
+                      PopupMenuButton<String>(
+                        tooltip: 'Жетістік әрекеттері',
+                        enabled: widget.actionsEnabled,
+                        icon: const Icon(Icons.more_vert_rounded),
+                        onSelected: (action) {
+                          if (action == 'edit') widget.onEdit?.call();
+                          if (action == 'delete') widget.onDelete?.call();
+                        },
+                        itemBuilder: (_) => [
+                          if (widget.onEdit != null)
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Өңдеу'),
+                            ),
+                          if (widget.onDelete != null)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Өшіру'),
+                            ),
+                        ],
+                      ),
                   ],
                 ),
                 const SizedBox(height: 14),
